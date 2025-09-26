@@ -14,6 +14,8 @@ function InfographicPage() {
     if (!htmlToRender) return null;
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlToRender, 'text/html');
+
+    // Solución para el CORS de las imágenes (sin cambios)
     const proxyUrl = 'https://corsproxy.io/?';
     doc.querySelectorAll('img').forEach(img => {
       const originalSrc = img.getAttribute('src');
@@ -21,9 +23,22 @@ function InfographicPage() {
         img.src = `${proxyUrl}${encodeURIComponent(originalSrc)}`;
       }
     });
-    const bodyContent = doc.body.innerHTML;
+    
+    // ===================================================================
+    // ✅ INICIO DE LA NUEVA MEJORA: LIMPIEZA DE HTML
+    // ===================================================================
+    // Obtenemos el contenido del body y usamos una expresión regular para
+    // buscar y eliminar globalmente (/g) todos los `&nbsp;`.
+    const bodyContentWithSpaces = doc.body.innerHTML;
+    const bodyContent = bodyContentWithSpaces.replace(/&nbsp;/g, '');
+    // ===================================================================
+    // ✅ FIN DE LA NUEVA MEJORA
+    // ===================================================================
+
+    // El resto de la lógica para extraer estilos y head a partir de aquí no cambia.
     let styles = '';
     doc.querySelectorAll('style').forEach(styleTag => { styles += styleTag.textContent; });
+    
     const headElements = [];
     doc.head.childNodes.forEach(node => {
       if ((node.tagName === 'LINK' && node.hasAttribute('href')) || (node.tagName === 'SCRIPT' && node.hasAttribute('src'))) {
@@ -32,9 +47,12 @@ function InfographicPage() {
         headElements.push({ tagName: node.tagName.toLowerCase(), attributes });
       }
     });
+
+    // Devolvemos el bodyContent ya limpio.
     return { bodyContent, styles, headElements };
   }, [htmlToRender]);
 
+  // El resto del componente (lógica de descarga y renderizado) no necesita cambios.
   const handleDownload = (format) => {
     if (!window.html2canvas || !window.jspdf) {
       alert("Error: Las librerías de descarga no se pudieron cargar. Revisa la consola para más detalles.");
@@ -93,10 +111,8 @@ function InfographicPage() {
       })}
       <style>{processedHtml.styles}</style>
 
-      {/* Barra de control con botones estilizados */}
       <div className="mb-6 p-4 bg-white rounded-xl shadow-md flex items-center justify-center sm:justify-between gap-4 flex-wrap">
         <div className="flex gap-4">
-          {/* Botón Descargar PNG */}
           <button
             onClick={() => handleDownload('png')}
             disabled={isDownloading}
@@ -104,7 +120,6 @@ function InfographicPage() {
           >
             {isDownloading ? 'Descargando...' : 'Descargar PNG'}
           </button>
-          {/* Botón Descargar PDF */}
           <button
             onClick={() => handleDownload('pdf')}
             disabled={isDownloading}
@@ -113,7 +128,6 @@ function InfographicPage() {
             {isDownloading ? 'Descargando...' : 'Descargar PDF'}
           </button>
         </div>
-        {/* Botón Volver */}
         <button
           onClick={() => navigate('/')}
           disabled={isDownloading}
