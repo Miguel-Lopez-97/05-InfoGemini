@@ -1,8 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import parse from 'html-react-parser';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 function InfographicPage() {
   const location = useLocation();
@@ -12,121 +10,120 @@ function InfographicPage() {
   const infographicRef = useRef(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // 🧠 PROCESADOR INTELIGENTE DE HTML
-  // Este bloque usa `useMemo` para ejecutarse solo cuando el HTML de entrada cambia.
   const processedHtml = useMemo(() => {
     if (!htmlToRender) return null;
-
-    // 1. Usamos DOMParser para convertir el string en un documento DOM en memoria.
-    // Esto es seguro y mucho más robusto que usar expresiones regulares.
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlToRender, 'text/html');
-
-    // 2. Extraemos las tres partes clave que necesitamos:
-    
-    // a) El contenido visual que va dentro del <body>
-    const bodyContent = doc.body.innerHTML;
-    
-    // b) Todos los estilos CSS que se encuentren en etiquetas <style>
-    let styles = '';
-    doc.querySelectorAll('style').forEach(styleTag => {
-      styles += styleTag.textContent;
-    });
-
-    // c) Los recursos externos como fuentes de Google o CDNs (ej. Tailwind)
-    const headElements = [];
-    doc.head.childNodes.forEach(node => {
-      // Solo nos interesan <link> con 'href' y <script> con 'src'
-      if ((node.tagName === 'LINK' && node.hasAttribute('href')) || (node.tagName === 'SCRIPT' && node.hasAttribute('src'))) {
-        const attributes = {};
-        for (const attr of node.attributes) {
-          attributes[attr.name] = attr.value;
-        }
-        headElements.push({
-          tagName: node.tagName.toLowerCase(),
-          attributes,
-        });
+    const proxyUrl = 'https://corsproxy.io/?';
+    doc.querySelectorAll('img').forEach(img => {
+      const originalSrc = img.getAttribute('src');
+      if (originalSrc && originalSrc.startsWith('http')) {
+        img.src = `${proxyUrl}${encodeURIComponent(originalSrc)}`;
       }
     });
-
+    const bodyContent = doc.body.innerHTML;
+    let styles = '';
+    doc.querySelectorAll('style').forEach(styleTag => { styles += styleTag.textContent; });
+    const headElements = [];
+    doc.head.childNodes.forEach(node => {
+      if ((node.tagName === 'LINK' && node.hasAttribute('href')) || (node.tagName === 'SCRIPT' && node.hasAttribute('src'))) {
+        const attributes = {};
+        for (const attr of node.attributes) { attributes[attr.name] = attr.value; }
+        headElements.push({ tagName: node.tagName.toLowerCase(), attributes });
+      }
+    });
     return { bodyContent, styles, headElements };
   }, [htmlToRender]);
 
-
-  // --- LÓGICA DE DESCARGA ---
-  // Estas funciones ya están correctamente integradas.
-
-  const handleDownloadPNG = () => {
+  const handleDownload = (format) => {
+    if (!window.html2canvas || !window.jspdf) {
+      alert("Error: Las librerías de descarga no se pudieron cargar. Revisa la consola para más detalles.");
+      return;
+    }
     if (!infographicRef.current) return;
+    
     setIsDownloading(true);
-    setTimeout(() => {
-      html2canvas(infographicRef.current, { useCORS: true, scale: 2 })
-        .then(canvas => {
+
+    setTimeout(async () => {
+      try {
+        const canvas = await window.html2canvas(infographicRef.current, {
+          useCORS: true,
+          scale: 2,
+        });
+
+        if (format === 'png') {
           const link = document.createElement('a');
-          link.download = 'infografia.png';
+          link.download = 'visualizacion.png';
           link.href = canvas.toDataURL('image/png');
           link.click();
-        })
-        .finally(() => setIsDownloading(false));
-    }, 100);
-  };
-  
-  const handleDownloadPDF = () => {
-    if (!infographicRef.current) return;
-    setIsDownloading(true);
-    setTimeout(() => {
-      html2canvas(infographicRef.current, { useCORS: true, scale: 2 })
-        .then(canvas => {
+        } else if (format === 'pdf') {
           const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF({
-            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-            unit: 'px',
-            format: [canvas.width, canvas.height],
-          });
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF({ orientation: canvas.width > canvas.height ? 'landscape' : 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
           pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-          pdf.save('infografia.pdf');
-        })
-        .finally(() => setIsDownloading(false));
+          pdf.save('visualizacion.pdf');
+        }
+      } catch (error) {
+        console.error("Error durante la generación del archivo:", error);
+        alert("Ocurrió un error al generar el archivo. El contenido HTML podría tener elementos que no se pueden procesar.");
+      } finally {
+        setIsDownloading(false);
+      }
     }, 100);
   };
-
-
-  // --- RENDERIZADO DEL COMPONENTE ---
 
   if (!processedHtml) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h2>Error</h2>
-        <p>No se encontró código HTML. Por favor, vuelve al inicio.</p>
-        <button onClick={() => navigate('/')}>Volver</button>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Error</h2>
+          <p className="text-gray-600 mb-4">No se encontró código HTML para visualizar.</p>
+          <button onClick={() => navigate('/')} className="px-6 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Volver al Inicio</button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      {/* 3. RECONSTRUIMOS EL HEAD USANDO LA FUNCIÓN NATIVA DE REACT 19 */}
-      {/* React moverá estas etiquetas al <head> del documento automáticamente. */}
+    <div className="p-4 sm:p-8 bg-gray-50 min-h-screen">
       <title>Visualizador de Infografía</title>
       {processedHtml.headElements.map((el, index) => {
         const Tag = el.tagName;
         return <Tag key={index} {...el.attributes} />;
       })}
-      
-      {/* 4. INYECTAMOS LOS ESTILOS CSS EXTRAÍDOS */}
       <style>{processedHtml.styles}</style>
 
-      {/* Contenedor de botones que se oculta durante la descarga */}
-      {!isDownloading && (
-        <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button onClick={handleDownloadPNG}>Descargar como PNG</button>
-          <button onClick={handleDownloadPDF}>Descargar como PDF</button>
-          <button onClick={() => navigate('/')} style={{ marginLeft: 'auto' }}>Volver</button>
+      {/* Barra de control con botones estilizados */}
+      <div className="mb-6 p-4 bg-white rounded-xl shadow-md flex items-center justify-center sm:justify-between gap-4 flex-wrap">
+        <div className="flex gap-4">
+          {/* Botón Descargar PNG */}
+          <button
+            onClick={() => handleDownload('png')}
+            disabled={isDownloading}
+            className="px-5 py-2.5 font-bold text-white bg-green-600 rounded-lg shadow-lg hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+          >
+            {isDownloading ? 'Descargando...' : 'Descargar PNG'}
+          </button>
+          {/* Botón Descargar PDF */}
+          <button
+            onClick={() => handleDownload('pdf')}
+            disabled={isDownloading}
+            className="px-5 py-2.5 font-bold text-white bg-red-600 rounded-lg shadow-lg hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+          >
+            {isDownloading ? 'Descargando...' : 'Descargar PDF'}
+          </button>
         </div>
-      )}
+        {/* Botón Volver */}
+        <button
+          onClick={() => navigate('/')}
+          disabled={isDownloading}
+          className="px-5 py-2.5 font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:bg-gray-100 transition-colors duration-300"
+        >
+          Volver
+        </button>
+      </div>
 
-      {/* 5. RENDERIZAMOS EL CONTENIDO VISUAL DENTRO DEL CONTENEDOR DE CAPTURA */}
-      <div ref={infographicRef}>
+      <div ref={infographicRef} className="bg-white p-4 sm:p-6 rounded-xl shadow-inner">
         {parse(processedHtml.bodyContent)}
       </div>
     </div>
