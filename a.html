@@ -1,0 +1,285 @@
+import html2canvas from "html2canvas";
+import logo from "../logo.png";
+
+// Este es el componente principal que contiene la agenda.
+const HealthWeekAgenda = () => {
+  // Las dependencias y estilos se incluyen aquí para que el componente sea autocontenido.
+  // En un proyecto real, las fuentes y scripts como Tailwind se suelen añadir en el `index.html` principal.
+  
+  // Función para exportar el contenedor de la agenda a un archivo PNG
+  const exportToPNG = () => {
+    const agendaContainer = document.getElementById('agenda-container');
+    if (agendaContainer) {
+      // Ocultar temporalmente el botón de descarga para que no aparezca en la captura
+      const downloadButton = document.getElementById('download-btn');
+      if(downloadButton) downloadButton.style.display = 'none';
+
+      html2canvas(agendaContainer, {
+        useCORS: true, // Necesario para cargar imágenes de dominios externos
+        scale: 2 // Aumenta la escala para una mejor calidad de imagen
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'Agenda_Semana_Salud.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        // Volver a mostrar el botón después de la descarga
+        if(downloadButton) downloadButton.style.display = 'block';
+      });
+    }
+  };
+
+  return (
+    <>
+      <head>
+        <title>Agenda de la Semana de la Salud y Seguridad Corporativa</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+      </head>
+
+      {/* Los estilos CSS se insertan directamente para mantener el diseño original */}
+      <style>{`
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e5e7eb; /* Gray-200 background */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        #agenda-container img {max-width: 25vw !important;}
+
+        #agenda-container {
+            max-width: 56rem; /* 896px */
+            width: 100%;
+            background-color: #f8f8f8; /* Lighter gray for the container */
+            padding: 2.5rem;
+            border-radius: 1.5rem; /* 24px */
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1);
+            border: 1px solid #d1d5db;
+        }
+        .day-card {
+            background-color: #ffffff; /* White cards for contrast */
+            border-radius: 1rem;
+            margin-bottom: 1.5rem; 
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+        }
+        .day-header {
+            background-color: #f97316; /* Orange */
+            color: white;
+            padding: 0.75rem 1.25rem;
+            font-weight: 700;
+            font-size: 1.25rem; /* 20px */
+        }
+        .activities-list {
+            flex-grow: 1;
+        }
+        .activity-item {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        .activity-title {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .activity-location {
+            color: #4b5563;
+            font-size: 0.875rem; /* 14px */
+        }
+        #download-btn {
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #0b57d0; /* Blue */
+            color: white;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s, transform 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        #download-btn:hover {
+            background-color: #0842a0;
+            transform: translateY(-2px);
+        }
+      `}</style>
+
+      <div className="flex flex-col items-center">
+        {/* Main content container */}
+        <div id="agenda-container">
+
+            {/* Header section */}
+            <div className="text-center mb-8">
+                <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-2">
+                    Agenda de Actividades
+                </h1>
+                <h2 className="text-2xl md:text-3xl font-bold text-orange-600">
+                    Semana de la Salud y Seguridad Corporativa
+                </h2>
+                <p className="text-md text-gray-500 mt-2">
+                    Del 29 de septiembre al 03 de octubre
+                </p>
+            </div>
+
+            {/* Main image section */}
+            <div className="mb-10 w-full flex justify-center">
+                <img src="https://png.pngtree.com/png-clipart/20230411/original/pngtree-world-health-day-characters-of-people-exercising-to-stay-healthy-lifestyle-png-image_9043302.png" alt="Grupo de personas haciendo ejercicio" className="w-3/4 max-w-md rounded-lg shadow-lg" />
+            </div>
+
+            {/* Agenda Grid */}
+            <div className="grid grid-cols-2 gap-6">
+                {/* Lunes */}
+                <div className="day-card">
+                    <div className="day-header">Lunes, 29 de Septiembre</div>
+                    <div className="activities-list">
+                        <div className="activity-item">
+                            <p className="activity-title">💃 Rumbaterapia</p>
+                            <p className="activity-location">Lugar: Oficina Principal</p>
+                        </div>
+                        <div className="activity-item">
+                            <p className="activity-title">🚦 Actividad Lúdica: Seguridad Vial</p>
+                            <p className="activity-location">Lugar: Fundación Cardio Infantil</p>
+                        </div>
+                        <div className="activity-item">
+                            <p className="activity-title">🚧 Actividad Lúdica: Riesgos Locativos</p>
+                            <p className="activity-location">Lugar: Piscilago</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Martes */}
+                <div className="day-card">
+                    <div className="day-header">Martes, 30 de Septiembre</div>
+                    <div className="activities-list">
+                        <div className="activity-item">
+                            <p className="text-gray-500 italic">No hay actividades programadas para este día.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Miércoles */}
+                <div className="day-card">
+                    <div className="day-header">Miércoles, 01 de Octubre</div>
+                    <div className="activities-list">
+                        <div className="activity-item">
+                            <p className="activity-title">🚧 Actividad Lúdica: Riesgos Laborales</p>
+                            <p className="activity-location">Lugar: Fundación Cardio Infantil</p>
+                        </div>
+                         <div className="activity-item">
+                            <p className="activity-title">💃 Rumbaterapia</p>
+                            <p className="activity-location">Lugar: Piscilago</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Jueves */}
+                <div className="day-card">
+                    <div className="day-header">Jueves, 02 de Octubre</div>
+                    <div className="activities-list">
+                         <div className="activity-item">
+                            <p className="activity-title">🧘‍♀️ Actividades de Relajación</p>
+                            <p className="activity-location">Lugar: Oficina Principal</p>
+                        </div>
+                        <div className="activity-item">
+                            <p className="activity-title">💃 Rumbaterapia</p>
+                            <p className="activity-location">Lugar: Fundación Cardio Infantil</p>
+                        </div>
+                        <div className="activity-item">
+                            <p className="activity-title">🚦 Actividad Lúdica: Seguridad Vial</p>
+                            <p className="activity-location">Lugar: Piscilago</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Viernes */}
+                <div className="day-card">
+                    <div className="day-header">Viernes, 03 de Octubre</div>
+                    <div className="activities-list">
+                        <div className="activity-item">
+                            <p className="activity-title">🥗 Alimentación Saludable</p>
+                            <p className="activity-location">Lugar: Oficina Principal</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Final Message */}
+            <div className="mt-8 pt-6 border-t border-gray-200 w-full text-center">
+                <p className="text-gray-600 italic font-semibold text-lg">
+                    Esta semana invierte en tu salud y bienestar para un equipo más fuerte.
+                </p>
+                <div className="mt-4 flex justify-center">
+                    <img src={logo} alt="Logo de Constructora GCG" className="h-10" />
+                </div>
+            </div>
+        </div>
+
+        <button id="download-btn" onClick={exportToPNG}>
+          Descargar como PNG
+        </button>
+      </div>
+    </>
+  );
+};
+
+// El componente `App` renderiza la agenda. Este sería el punto de entrada.
+export default function App() {
+  return <HealthWeekAgenda />;
+}
+
+
+const exportarPDF = async () => {
+    const botones = document.querySelector(".sub-container.buttons");
+    const botones2 = document.querySelector(".comeBack");
+    const opciones = document.querySelector("#other-options-panel");
+
+    // 0️⃣ Ocultar elementos de forma robusta
+    if (botones) botones.style.setProperty("display", "none", "important");
+    if (botones2) botones2.style.setProperty("display", "none", "important");
+    if (opciones) opciones.style.setProperty("display", "none", "important");
+
+    // Esperar un instante para asegurar que el navegador aplique los cambios de estilo
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    // 1️⃣ Capturar la página
+    const originalScrollY = window.scrollY;
+    window.scrollTo(0, 0);
+    const body = document.body;
+    const canvas = await html2canvas(body, {
+      scale: 2,
+      useCORS: true,
+      scrollY: -window.scrollY,
+    });
+    window.scrollTo(0, originalScrollY);
+
+    // 2️⃣ Crear el PDF
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "px",
+      format: [canvas.width, canvas.height],
+    });
+
+    // 3️⃣ Agregar la imagen y descargar
+    const imgData = canvas.toDataURL("image/png");
+    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+    pdf.save(`Mi_proyecto_ideal.pdf`);
+
+    // 4️⃣ Restaurar la visibilidad de los elementos
+    if (botones) botones.style.removeProperty("display");
+    if (opciones) opciones.style.removeProperty("display");
+    if (botones2) botones2.style.removeProperty("display");
+    
+  };
+
+  
